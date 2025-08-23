@@ -55,6 +55,16 @@ const authenticate = async (req, res, next) => {
     }
 };
 
+app.get('/test-quests', async (req, res) => {
+    try {
+        const snapshot = await db.collection('Quests').get();
+        const quests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(quests);
+    } catch (error) {
+        console.error('Error fetching Quests:', error);
+        res.status(500).json({ error: 'Failed to fetch Quests' });
+    }
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
