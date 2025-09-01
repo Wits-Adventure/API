@@ -21,8 +21,11 @@
   "homepage": "https://github.com/Wits-Adventure/API#readme",
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "firebase-admin": "^13.4.0"
+    "firebase-admin": "^13.5.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.1"
   }
 }
