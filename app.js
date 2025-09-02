@@ -26,7 +26,8 @@ const authAdmin = admin.auth();
 const userRoutes = require('./routes/users');
 const uploadRoutes = require('./routes/upload');
 const questsRoutes = require('./routes/quests');
-
+const profileRoutes = require('./routes/profile');
+app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/quests', questsRoutes);

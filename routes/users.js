@@ -3,8 +3,7 @@ const router = express.Router();
 const admin = require('firebase-admin');
 
 const db = admin.firestore();
-const { serverTimestamp } = require('firebase-admin').FieldValue;
-
+const { serverTimestamp } = require('firebase-admin/firestore');
 const { authenticate } = require('../functions/auth');
 
 
