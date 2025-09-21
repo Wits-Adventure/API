@@ -27,8 +27,17 @@ const upload = require('./routes/upload')
 const questsRoutes = require('./routes/quests');
 
 app.use('/api/users', userRoutes);
-app.use('/api/upload', upload) 
+app.use('/api/upload', upload)
 app.use('/api/quests', questsRoutes);
+
+// Basic health-check / landing routes
+app.get('/', (req, res) => {
+    res.send('<h1>API deployed — Backend is running</h1><p>Available: <a href="/api/quests">/api/quests</a>, <a href="/api/users">/api/users</a></p>');
+});
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime(), env: process.env.NODE_ENV || 'production' });
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
