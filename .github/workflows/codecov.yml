@@ -1,15 +1,12 @@
 name: Run tests and upload coverage
 
-on:
-  push:
-    branches:
-      - main
+on: 
+  push
 
 jobs:
   test:
     name: Run tests and collect coverage
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,25 +15,15 @@ jobs:
 
       - name: Set up Node
         uses: actions/setup-node@v4
-        with:
-          node-version: "20"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Fix Jest permissions
-        run: chmod -R +x ./node_modules/.bin
-
-      - name: Run tests with verbosity and continue on error
-        run: npx jest --config jest.config.js --coverage --verbose || true
-
-      - name: List coverage directory
-        run: ls -l coverage
+      - name: Run tests
+        run: npx jest --coverage
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: Wits-Adventure/API
-          files: coverage/lcov.info
-          fail_ci_if_error: true
