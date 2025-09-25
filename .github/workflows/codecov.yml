@@ -37,6 +37,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: Wits-Adventure/Wits-Adventure
+          slug: Wits-Adventure/API/tree/main
           files: coverage/lcov.info
           fail_ci_if_error: true
