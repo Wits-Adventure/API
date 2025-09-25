@@ -14,30 +14,30 @@ const { authenticate } = require('../functions/auth');
 
 // User Endpoints
 router.post('/', authenticate, async (req, res) => {
-    try {
-        const { userId, email, name, role } = req.body;
-        if (req.user.uid !== userId) {
-            return res.status(403).json({ error: 'Forbidden: User ID mismatch' });
-        }
-        const userData = {
-            Email: email,
-            Name: name,
-            joinedAt: serverTimestamp(),
-            Role: role,
-            LeaderBoardPoints: 0,
-            Level: 0,
-            CompletedQuests: [],
-            Bio: "",
-            SpendablePoints: 0,
-            Experience: 0,
-            Quests: [],
-        };
-        await db.collection('Users').doc(userId).set(userData);
-        res.status(200).json({ message: 'User added successfully' });
-    } catch (error) {
-        console.error('Error adding user:', error);
-        res.status(500).json({ error: 'Failed to add user', details: error.message });
-    }
+ try {
+     const { userId, email, name, role } = req.body;
+        if (req.user.uid !== userId) {
+             return res.status(403).json({ error: 'Forbidden: User ID mismatch' });
+         }
+        const userData = {
+            Email: email,
+            Name: name,
+            joinedAt: serverTimestamp(),
+            Role: role,
+            LeaderBoardPoints: 0,
+            Level: 0,
+            CompletedQuests: [],
+            Bio: "",
+            SpendablePoints: 0,
+            Experience: 0,
+            Quests: [],
+     };
+     await db.collection('Users').doc(userId).set(userData);
+    res.status(200).json({ message: 'User added successfully' });
+    } catch (error) {
+    console.error('Error adding user:', error);
+    res.status(500).json({ error: 'Failed to add user', details: error.message });
+ }
 });
 
 router.get('/:userId', authenticate, async (req, res) => {
