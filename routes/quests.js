@@ -64,24 +64,31 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const questData = {
-            ...req.body,
-            creatorId: req.user.uid, // Creator ID is inferred securely from the token
+            name: req.body.name || '',
+            description: req.body.description || '',
+            radius: Number(req.body.radius) || 0,
+            reward: Number(req.body.reward ?? req.body.points) || 0,
+            imageUrl: req.body.imageUrl || '',
+            creatorId: req.user.uid,
+            creatorName: req.body.creatorName || req.user.name || req.user.displayName || req.user.email || '',
             createdAt: FieldValue.serverTimestamp(),
-            acceptedQuests: [],
+            active: true,
+            acceptedBy: [],          // match old schema
             submissions: [],
-            isArchived: false,
+            emoji: req.body.emoji || '',
+            color: req.body.color || ''
         };
 
-        // Handle GeoPoint conversion for location-based quests
-        if (questData.location && typeof questData.location.latitude === 'number' && typeof questData.location.longitude === 'number') {
-            questData.location = new GeoPoint(questData.location.latitude, questData.location.longitude);
-        } else {
-            delete questData.location; // Remove if invalid/missing
+        // Require lat/lng and create GeoPoint (old format)
+        const lat = Number(req.body.lat);
+        const lng = Number(req.body.lng);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return res.status(400).json({ error: 'lat and lng must be numbers' });
         }
+        questData.location = new GeoPoint(lat, lng);
 
         const newQuestRef = await db.collection('Quests').add(questData);
         res.status(201).json({ message: 'Quest created successfully', questId: newQuestRef.id });
-
     } catch (error) {
         console.error('Error creating quest:', error);
         res.status(500).json({ error: 'Failed to create quest' });
@@ -183,7 +190,7 @@ router.get('/:questId/submissions', async (req, res) => {
         if (questDoc.data().creatorId !== req.user.uid) {
             return res.status(403).json({ error: 'Forbidden: You are not the quest creator.' });
         }
-        
+
         res.status(200).json(submissions);
     } catch (error) {
         console.error(`Error fetching submissions for quest ${questId}:`, error);
@@ -210,13 +217,13 @@ router.patch('/:questId/submissions/remove', async (req, res) => {
             const questDoc = await t.get(questRef);
             if (!questDoc.exists) throw new Error("Quest not found.");
             if (questDoc.data().creatorId !== req.user.uid) throw new Error("Forbidden: Not the creator.");
-            
+
             const submissions = questDoc.data().submissions || [];
             if (submissionIndex >= submissions.length) throw new Error("Invalid submission index.");
 
             // Create a new array excluding the submission at the index
             const updatedSubmissions = submissions.filter((_, index) => index !== submissionIndex);
-            
+
             t.update(questRef, { submissions: updatedSubmissions });
             return { message: 'Submission removed.' };
         });
@@ -248,11 +255,11 @@ router.patch('/:questId/submissions/remove-by-user', async (req, res) => {
             const questDoc = await t.get(questRef);
             if (!questDoc.exists) throw new Error("Quest not found.");
             if (questDoc.data().creatorId !== req.user.uid) throw new Error("Forbidden: Not the creator.");
-            
+
             const submissions = questDoc.data().submissions || [];
             // Filter out all submissions belonging to userIdToRemove
             const updatedSubmissions = submissions.filter(sub => sub.userId !== userIdToRemove);
-            
+
             t.update(questRef, { submissions: updatedSubmissions });
             return { message: `Submissions for user ${userIdToRemove} removed.` };
         });
@@ -345,7 +352,7 @@ router.post('/:questId/approve', async (req, res) => {
                     SpendablePoints: FieldValue.increment(rewardPoints),
                     LeaderBoardPoints: FieldValue.increment(rewardPoints),
                     // Remove from accepted list
-                    acceptedQuests: FieldValue.arrayRemove(questId) 
+                    acceptedQuests: FieldValue.arrayRemove(questId)
                     // Add to completed list (assuming a CompletedQuests array structure)
                 });
             }
@@ -354,8 +361,8 @@ router.post('/:questId/approve', async (req, res) => {
             if (creatorId !== approvedUserId) {
                 const creatorRef = db.collection('Users').doc(creatorId);
                 // Simple point reward for creator contribution
-                t.update(creatorRef, { 
-                    SpendablePoints: FieldValue.increment(rewardPoints / 2) 
+                t.update(creatorRef, {
+                    SpendablePoints: FieldValue.increment(rewardPoints / 2)
                 });
             }
 
@@ -364,7 +371,7 @@ router.post('/:questId/approve', async (req, res) => {
             const usersToCleanSnapshot = await db.collection("Users")
                 .where('acceptedQuests', 'array-contains', questId)
                 .get();
-            
+
             const batch = db.batch();
             usersToCleanSnapshot.forEach(userDoc => {
                 const userRef = db.collection("Users").doc(userDoc.id);
@@ -372,19 +379,19 @@ router.post('/:questId/approve', async (req, res) => {
                     acceptedQuests: FieldValue.arrayRemove(questId)
                 });
             });
-            await batch.commit(); 
+            await batch.commit();
 
             // 4. Delete the quest document
-            t.delete(questRef); 
+            t.delete(questRef);
         });
 
-        res.status(200).json({ 
-            message: `Quest ${questId} approved for user ${approvedUserId} and closed successfully.` 
+        res.status(200).json({
+            message: `Quest ${questId} approved for user ${approvedUserId} and closed successfully.`
         });
 
     } catch (error) {
         console.error('Error approving and closing quest:', error);
-        
+
         let statusCode = 500;
         if (error.message.includes("Forbidden")) statusCode = 403;
         if (error.message.includes("not found")) statusCode = 404;
@@ -477,7 +484,7 @@ router.patch('/journey/advance', async (req, res) => {
         const userDoc = await userRef.get();
         // Simple security check: ensure the user is on the quest they are trying to advance
         if (userDoc.data()?.currentJourneyQuest !== journeyQuestId) {
-             return res.status(403).json({ error: 'User is not currently undertaking this journey quest.' });
+            return res.status(403).json({ error: 'User is not currently undertaking this journey quest.' });
         }
 
         await userRef.update({
