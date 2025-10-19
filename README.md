@@ -2,7 +2,7 @@
 The API
 
 ## Required environment variables
-The api has two environment variables, the first of which is hidden for sercurity reasons
+The api has two environment variables, the first of which is hidden for security reasons
 
 ```properties
 # base64-encoded Firebase service account JSON
@@ -10,7 +10,7 @@ FIREBASE_SERVICE_ACCOUNT=BASE64_SERVICE_ACCOUNT_JSON
 
 # Firestore storage bucket
 REACT_APP_FIREBASE_STORAGE_BUCKET=bloobase2.firebasestorage.app
-
+```
 
 ## Run locally
 1. Install dependencies:
